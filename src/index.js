@@ -1,13 +1,25 @@
 import {BehaviorSubject} from "rxjs";
 
-const count = new BehaviorSubject(0);
+class Emporium {
+    count = new BehaviorSubject(0);
 
-const add = function() {
-    let currentCount = count.getValue();
-    currentCount++;
-    count.next(currentCount);
-};
+    constructor() {
+        if (!!Emporium.instance) {
+            return Emporium.instance;
+        }
 
-window.emporium = { add, count };
+        Emporium.instance = this;
 
-export default { add, count };
+        return this;
+    }
+
+    add() {
+        let currentCount = this.count.getValue();
+        currentCount++;
+        this.count.next(currentCount);
+    }
+}
+
+window.emporium = new Emporium();
+
+export default new Emporium();

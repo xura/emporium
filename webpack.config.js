@@ -6,7 +6,7 @@ module.exports = {
         filename: 'main.js',
         path: path.resolve(__dirname, 'dist'),
         library: 'emporium',
-        libraryTarget: 'commonjs2'
+        libraryTarget: 'umd'
     },
     module: {
         rules: [
@@ -16,7 +16,8 @@ module.exports = {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: ['@babel/preset-env']
+                        presets: ['@babel/preset-env'],
+                        plugins: ['@babel/plugin-proposal-class-properties']
                     }
                 }
             }
