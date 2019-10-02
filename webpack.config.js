@@ -8,6 +8,11 @@ module.exports = {
         library: 'emporium',
         libraryTarget: 'umd'
     },
+    devServer: {
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+        }
+    },
     module: {
         rules: [
             {
