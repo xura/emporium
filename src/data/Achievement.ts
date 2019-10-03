@@ -4,7 +4,7 @@ import {injectable} from "tsyringe";
 
 @injectable()
 export class Achievement extends BaseModel {
-    constructor(private _repo: ALocalStorage<Achievement>) {
+    constructor(public repo: ALocalStorage<Achievement>) {
         super();
     }
 

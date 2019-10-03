@@ -8,12 +8,13 @@ const containers = {
     }
 };
 
+
 @singleton()
 export class Emporium {
-    [key: string]: {}
+    [key: string]: {};
 
     constructor() {
-        for (let [container, {resolve}] of Object.entries(containers)) {
+        for (const [container, {resolve}] of Object.entries(containers)) {
             this[container] = resolve();
         }
     }
@@ -21,3 +22,5 @@ export class Emporium {
 
 // @ts-ignore
 window.emp = new Emporium();
+
+
