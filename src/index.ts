@@ -1,26 +1,13 @@
 import "reflect-metadata";
 import {container, singleton} from "tsyringe";
 import {Achievement} from "./data/Achievement";
+import {Container} from "inversify";
+import {IRepository} from "./interfaces/IRepository";
 
-const containers = {
-    achievements: {
-        resolve: () => container.resolve(Achievement)
-    }
+export const TYPES = {
+    Repository: Symbol("Repository")
 };
 
 
-@singleton()
-export class Emporium {
-    [key: string]: {};
-
-    constructor() {
-        for (const [container, {resolve}] of Object.entries(containers)) {
-            this[container] = resolve();
-        }
-    }
-}
-
-// @ts-ignore
-window.emp = new Emporium();
-
-
+const container = new Container();
+container.bind<IRepository>(TYPES.Repository).to()
