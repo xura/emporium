@@ -1,23 +1,35 @@
-import "reflect-metadata";
-import {container, singleton} from "tsyringe";
 import {Achievement} from "./data/Achievement";
-import {ALocalStorage} from "./adapters/ALocalStorage";
-import {User} from "./data/User";
+import {BeforeInsert, createConnection, Entity} from "typeorm";
 
-container.register("IRepository", {
-    useClass: ALocalStorage
-});
 
-const containers = {
-    achievements: container.resolve(Achievement),
-    users: container.resolve(User)
-};
+(async function() {
+    const connection = await createConnection({
+        type: "sqljs",
+        location: "emporium",
+        autoSave: true,
+        entities: [
+            Achievement
+        ],
+        logging: ['query', 'schema'],
+        synchronize: true
+    });
 
-containers.achievements.repo.stream().subscribe(_ =>
-    (document.getElementById("achievements") as any).textContent = _.id);
 
-containers.users.repo.stream().subscribe(_ =>
-    (document.getElementById("users") as any).textContent = _.firstName);
+    const achievement = new Achievement();
 
-// @ts-ignore
-window.emp = containers;
+    achievement.name = 'Hey there';
+
+    // can we create a custom repo that sends off a IRepository BeforeSave command but doesnt save "repo" to the
+    // persistence store ?
+    // https://github.com/typeorm/typeorm-typedi-extensions
+    const achievementRepo = connection.getRepository<Achievement>(Achievement);
+
+    await achievementRepo.save(achievement);
+
+    const achievements = await achievementRepo.find();
+    debugger;
+
+})();
+
+
+

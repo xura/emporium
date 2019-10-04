@@ -1,4 +1,6 @@
 const path = require('path');
+const webpack = require("webpack");
+const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     entry: './src/index.ts',
@@ -23,6 +25,14 @@ module.exports = {
             }
         ]
     },
+    plugins: [
+        new webpack.NormalModuleReplacementPlugin(/typeorm$/, function (result) {
+            result.request = result.request.replace(/typeorm/, "typeorm/browser");
+        }),
+        new CopyPlugin([
+            { from: 'node_modules/sql.js/dist/sql-wasm.wasm' }
+        ]),
+    ],
     resolve: {
         modules: [
             __dirname,
