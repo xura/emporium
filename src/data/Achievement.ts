@@ -1,10 +1,11 @@
 import {BaseModel} from "./BaseModel";
 import {ALocalStorage} from "../adapters/ALocalStorage";
-import {injectable} from "tsyringe";
+import {inject, injectable} from "tsyringe";
+import {IRepository} from "../interfaces/IRepository";
 
 @injectable()
 export class Achievement extends BaseModel {
-    constructor(public repo: ALocalStorage<Achievement>) {
+    constructor(@inject('IRepository') public repo: IRepository<Achievement>) {
         super();
     }
 

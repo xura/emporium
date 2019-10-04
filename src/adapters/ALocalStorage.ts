@@ -2,7 +2,9 @@ import {IRepository} from "../interfaces/IRepository";
 import {Observable, Subject} from "rxjs";
 import localforage from 'localforage';
 import {BaseModel} from "../data/BaseModel";
+import {injectable} from "tsyringe";
 
+@injectable()
 export class ALocalStorage<T extends BaseModel> implements IRepository<T> {
     private _store: Subject<T> = new Subject<T>();
 
