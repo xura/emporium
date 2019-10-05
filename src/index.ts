@@ -1,23 +1,55 @@
-import "reflect-metadata";
-import {container, singleton} from "tsyringe";
-import {Achievement} from "./data/Achievement";
-import {ALocalStorage} from "./adapters/ALocalStorage";
-import {User} from "./data/User";
+import { Emporium } from './Emporium';
+import { Achievement } from "./data/Achievement";
+import { createConnection } from "typeorm";
+import { container } from "tsyringe";
+import { HttpBin } from "./adapters/HttpBin";
 
-container.register("IRepository", {
-    useClass: ALocalStorage
-});
 
-const containers = {
-    achievements: container.resolve(Achievement),
-    users: container.resolve(User)
+const emp = {
+    init: new Promise(async function (resolve) {
+        const connection = await createConnection({
+            type: "sqljs",
+            location: "emporium",
+            autoSave: true,
+            entities: [
+                Achievement
+            ],
+            logging: ['query', 'schema'],
+            synchronize: true
+        });
+
+        const models = [
+            Achievement
+        ];
+
+        container.register("IRepository", {
+            useClass: HttpBin
+        });
+
+        const achievements = new Emporium<Achievement>(
+            connection,
+            Achievement
+        );
+
+        achievements.stream()
+            .then(store =>
+                store.subscribe(achievement =>
+                    (document.getElementById('achievements') as any).textContent = achievement.name));
+
+        achievements.save({
+            name: `Hey there - no repo ${Math.random()}`
+        });
+
+        const repos = { achievements };
+
+        // @ts-ignore
+        window.emp = repos;
+
+        resolve(repos);
+    })
 };
 
-containers.achievements.repo.stream().subscribe(_ =>
-    (document.getElementById("achievements") as any).textContent = _.id);
 
-containers.users.repo.stream().subscribe(_ =>
-    (document.getElementById("users") as any).textContent = _.firstName);
+export { emp };
 
-// @ts-ignore
-window.emp = containers;
+

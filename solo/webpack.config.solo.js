@@ -6,6 +6,7 @@ const {CleanWebpackPlugin} = require("clean-webpack-plugin");
 base.entry = path.resolve(__dirname, '../src/index.ts');
 
 base.plugins = [
+    ...base.plugins,
     new CleanWebpackPlugin({
         cleanAfterEveryBuildPatterns: ['build/emporium']
     }),

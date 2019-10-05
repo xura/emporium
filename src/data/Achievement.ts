@@ -1,13 +1,16 @@
-import {BaseModel} from "./BaseModel";
-import {ALocalStorage} from "../adapters/ALocalStorage";
-import {inject, injectable} from "tsyringe";
-import {IRepository} from "../interfaces/IRepository";
+import { Entity, Column, PrimaryGeneratedColumn, Repository, Connection, ObjectType } from "typeorm";
+import { inject, injectable, container, autoInjectable, singleton } from "tsyringe";
+import { Observable, Subject } from 'rxjs';
+import { AsyncQueue, queue } from 'async';
+import { default as ky } from 'ky';
 
-@injectable()
-export class Achievement extends BaseModel {
-    constructor(@inject('IRepository') public repo: IRepository<Achievement>) {
-        super();
-    }
 
+@Entity()
+export class Achievement {
+
+    @PrimaryGeneratedColumn()
+    id?: number;
+
+    @Column()
     name: string = '';
 }
