@@ -1,8 +1,8 @@
-import {Achievement} from "./data/Achievement";
-import {BeforeInsert, createConnection, Entity} from "typeorm";
+import { Achievement, Emporium } from "./data/Achievement";
+import { BeforeInsert, createConnection, Entity } from "typeorm";
 
 
-(async function() {
+(async function () {
     const connection = await createConnection({
         type: "sqljs",
         location: "emporium",
@@ -14,20 +14,37 @@ import {BeforeInsert, createConnection, Entity} from "typeorm";
         synchronize: true
     });
 
+    const models = [
+        Achievement
+    ];
 
-    const achievement = new Achievement();
+    const achievements = new Emporium<Achievement>(
+        connection,
+        Achievement
+    );
 
-    achievement.name = 'Hey there';
+    achievements.save({
+        name: 'Hey there - no repo'
+    })
 
-    // can we create a custom repo that sends off a IRepository BeforeSave command but doesnt save "repo" to the
-    // persistence store ?
-    // https://github.com/typeorm/typeorm-typedi-extensions
-    const achievementRepo = connection.getRepository<Achievement>(Achievement);
+    const a = await achievements.find();
 
-    await achievementRepo.save(achievement);
-
-    const achievements = await achievementRepo.find();
     debugger;
+
+
+    // const achievement = new Achievement();
+
+    // achievement.name = 'Hey there';
+
+    // // can we create a custom repo that sends off a IRepository BeforeSave command but doesnt save "repo" to the
+    // // persistence store ?
+    // // https://github.com/typeorm/typeorm-typedi-extensions
+    // const achievementRepo = connection.getRepository<Achievement>(Achievement);
+
+    // await achievementRepo.save(achievement);
+
+    // const achievements = await achievementRepo.find();
+    // debugger;
 
 })();
 
