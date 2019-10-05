@@ -1,52 +1,55 @@
-import { Achievement, Emporium } from "./data/Achievement";
-import { BeforeInsert, createConnection, Entity } from "typeorm";
+import { Emporium } from './Emporium';
+import { Achievement } from "./data/Achievement";
+import { createConnection } from "typeorm";
+import { container } from "tsyringe";
+import { HttpBin } from "./adapters/HttpBin";
 
 
-(async function () {
-    const connection = await createConnection({
-        type: "sqljs",
-        location: "emporium",
-        autoSave: true,
-        entities: [
+const emp = {
+    init: new Promise(async function (resolve) {
+        const connection = await createConnection({
+            type: "sqljs",
+            location: "emporium",
+            autoSave: true,
+            entities: [
+                Achievement
+            ],
+            logging: ['query', 'schema'],
+            synchronize: true
+        });
+
+        const models = [
             Achievement
-        ],
-        logging: ['query', 'schema'],
-        synchronize: true
-    });
+        ];
 
-    const models = [
-        Achievement
-    ];
+        container.register("IRepository", {
+            useClass: HttpBin
+        });
 
-    const achievements = new Emporium<Achievement>(
-        connection,
-        Achievement
-    );
+        const achievements = new Emporium<Achievement>(
+            connection,
+            Achievement
+        );
 
-    achievements.save({
-        name: 'Hey there - no repo'
+        achievements.stream()
+            .then(store =>
+                store.subscribe(achievement =>
+                    (document.getElementById('achievements') as any).textContent = achievement.name));
+
+        achievements.save({
+            name: `Hey there - no repo ${Math.random()}`
+        });
+
+        const repos = { achievements };
+
+        // @ts-ignore
+        window.emp = repos;
+
+        resolve(repos);
     })
-
-    const a = await achievements.find();
-
-    debugger;
+};
 
 
-    // const achievement = new Achievement();
-
-    // achievement.name = 'Hey there';
-
-    // // can we create a custom repo that sends off a IRepository BeforeSave command but doesnt save "repo" to the
-    // // persistence store ?
-    // // https://github.com/typeorm/typeorm-typedi-extensions
-    // const achievementRepo = connection.getRepository<Achievement>(Achievement);
-
-    // await achievementRepo.save(achievement);
-
-    // const achievements = await achievementRepo.find();
-    // debugger;
-
-})();
-
+export { emp };
 
 

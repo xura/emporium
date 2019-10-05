@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Xura | Emporium</title>
-    <script type="systemjs-importmap">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Xura | Emporium</title>
+  <script type="systemjs-importmap">
     {
       "imports": {
         "rxjs": "https://unpkg.com/rxjs@6.4.0/bundles/rxjs.umd.min.js",
@@ -13,27 +14,29 @@
     }
   </script>
 
-    <script src="../node_modules/sql.js/dist/sql-wasm.js"></script>
-    <script>
-        initSqlJs();
-    </script>
-    <script src='https://unpkg.com/systemjs@4.1.0/dist/system.js'></script>
-    <script src='https://unpkg.com/systemjs@4.1.0/dist/extras/amd.js'></script>
-    <script src='https://unpkg.com/systemjs@4.1.0/dist/extras/named-exports.js'></script>
-    <script src='https://unpkg.com/systemjs@4.1.0/dist/extras/use-default.js'></script>
+  <script src="../node_modules/sql.js/dist/sql-wasm.js"></script>
+  <script>
+    initSqlJs();
+  </script>
+  <script src='https://unpkg.com/systemjs@4.1.0/dist/system.js'></script>
+  <script src='https://unpkg.com/systemjs@4.1.0/dist/extras/amd.js'></script>
+  <script src='https://unpkg.com/systemjs@4.1.0/dist/extras/named-exports.js'></script>
+  <script src='https://unpkg.com/systemjs@4.1.0/dist/extras/use-default.js'></script>
 
-    <script>
-        System.import('@xura/emporium')
-    </script>
+  <script>
+    System.import('@xura/emporium');
+  </script>
 </head>
 <ul>
-    <li>
-        achievements: <span id="achievements"></span>
-    </li>
-    <li>
-        users: <span id="users"></span>
-    </li>
+  <li>
+    achievements: <span id="achievements"></span>
+  </li>
+  <li>
+    users: <span id="users"></span>
+  </li>
 </ul>
+
 <body>
 </body>
+
 </html>
