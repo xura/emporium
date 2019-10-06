@@ -3,7 +3,6 @@ import { inject, autoInjectable } from "tsyringe";
 import { Observable } from 'rxjs';
 import { IRepository } from './interfaces/IRepository';
 
-
 @autoInjectable()
 export class Emporium<T> implements IRepository<T> {
     private _entityRepo: Repository<T>;
