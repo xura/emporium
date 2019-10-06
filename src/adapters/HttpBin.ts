@@ -3,11 +3,10 @@ import { Subject } from "rxjs";
 import { AsyncQueue, queue } from "async";
 import ky from "ky";
 import { IRepository } from "../interfaces/IRepository";
-import { Adapter } from "@xura/emporium/src/adapters/Adaptor";
 
 @injectable()
 @singleton()
-export class HttpBin<T> extends Adapter implements IRepository<T> {
+export class HttpBin<T> implements IRepository<T> {
     private _store: Subject<T> = new Subject();
     private _queue: AsyncQueue<T> = queue(
         (task: T, callback: () => void) => {
