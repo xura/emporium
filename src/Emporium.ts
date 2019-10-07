@@ -1,4 +1,4 @@
-import { Repository, Connection, ObjectType } from "typeorm";
+import { Repository, Connection, ObjectType, getRepository } from "typeorm";
 import { inject, autoInjectable, singleton } from "tsyringe";
 import { Observable } from 'rxjs';
 import { IRepository } from './interfaces/IRepository';
@@ -6,21 +6,26 @@ import { IRepository } from './interfaces/IRepository';
 @autoInjectable()
 @singleton()
 export class Emporium<T> implements IRepository<T> {
-    private _entityRepo: Repository<T>;
+    private _connectionName: string;
+    private _model: ObjectType<T>;
     private _getRepo(): Promise<IRepository<T>> {
-        if (!this.repo) {
+        if (!this.repo || !this._connectionName) {
             return Promise.reject("No Repo injected");
         }
 
         return Promise.resolve(this.repo);
     }
+    get _entityRepo(): Repository<T> {
+        return getRepository(this._model, this._connectionName);
+    };
 
     constructor(
-        connection: () => Connection,
+        connectionName: string,
         model: ObjectType<T>,
         @inject("IRepository") private repo?: IRepository<T>
     ) {
-        this._entityRepo = connection().getRepository(model);
+        this._connectionName = connectionName;
+        this._model = model;
     }
 
     save(entity: T): Promise<T> {
