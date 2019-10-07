@@ -1,7 +1,7 @@
 {
   "name": "@xura/emporium",
   "version": "0.0.1",
-  "main": "./bridge/emporium/emporium.js",
+  "main": "./bridge/build/emporium/emporium.js",
   "types": "./index.d.ts",
   "scripts": {
     "build": "npx webpack --config bridge/webpack.config.js",
