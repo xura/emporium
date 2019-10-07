@@ -16,7 +16,7 @@ export class Emporium<T> implements IRepository<T> {
         return Promise.resolve(this.repo);
     }
     get _entityRepo(): Repository<T> {
-        return getRepository(this._model, this._connectionName);
+        return getRepository(this._model);
     };
 
     constructor(

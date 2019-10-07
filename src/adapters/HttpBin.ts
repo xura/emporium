@@ -10,7 +10,6 @@ export class HttpBin<T> implements IRepository<T> {
     private _store: Subject<T> = new Subject();
     private _queue: AsyncQueue<T> = queue(
         (task: T, callback: () => void) => {
-            debugger;
             this._store.next(task);
             callback();
         }, 2);
