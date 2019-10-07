@@ -8,6 +8,8 @@ import { IRepository } from "../interfaces/IRepository";
 @singleton()
 export class HttpBin<T> implements IRepository<T> {
     private _store: Subject<T> = new Subject();
+    // probably replace this queue with bottleneck package
+    // then store each queued task by id in localforage
     private _queue: AsyncQueue<T> = queue(
         (task: T, callback: () => void) => {
             this._store.next(task);

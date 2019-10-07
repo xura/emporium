@@ -6,7 +6,7 @@ const initEmporium = () => {
     container.register("IRepository", {
         useClass: HttpBin
     });
-}
+};
 
 export { initEmporium, Emporium };
 

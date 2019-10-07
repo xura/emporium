@@ -1,12 +1,10 @@
 {
   "name": "@xura/emporium",
   "version": "0.0.1",
-  "main": "./bridge/build/emporium/emporium.js",
+  "main": "./dist/emporium.js",
   "types": "./index.d.ts",
   "scripts": {
-    "build": "npx webpack --config bridge/webpack.config.js",
-    "start": "webpack-dev-server --config bridge/webpack.config.js --port 8237",
-    "start:solo": "webpack-dev-server --config solo/webpack.config.solo.js --port 8237"
+    "build": "webpack --config webpack.config.js"
   },
   "repository": "https://github.com/xura/emporium.git",
   "author": "Joe Badaczewski <joe307bad@gmail.com>",
