@@ -16,11 +16,11 @@ export class Emporium<T> implements IRepository<T> {
     }
 
     constructor(
-        connection: Connection,
+        connection: () => Connection,
         model: ObjectType<T>,
         @inject("IRepository") private repo?: IRepository<T>
     ) {
-        this._entityRepo = connection.getRepository(model);
+        this._entityRepo = connection().getRepository(model);
     }
 
     save(entity: T): Promise<T> {
