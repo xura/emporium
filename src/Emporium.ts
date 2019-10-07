@@ -1,9 +1,10 @@
 import { Repository, Connection, ObjectType } from "typeorm";
-import { inject, autoInjectable } from "tsyringe";
+import { inject, autoInjectable, singleton } from "tsyringe";
 import { Observable } from 'rxjs';
 import { IRepository } from './interfaces/IRepository';
 
 @autoInjectable()
+@singleton()
 export class Emporium<T> implements IRepository<T> {
     private _entityRepo: Repository<T>;
     private _getRepo(): Promise<IRepository<T>> {
