@@ -38,7 +38,7 @@ module.exports = {
             __dirname,
             'node_modules',
         ],
-        extensions: [ '.tsx', '.ts', '.js' ]
+        extensions: ['.tsx', '.ts', '.js']
     },
     devtool: 'source-map',
     externals: [
