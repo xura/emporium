@@ -4,7 +4,8 @@
   "main": "./dist/emporium.js",
   "types": "./index.d.ts",
   "scripts": {
-    "build": "webpack --config webpack.config.js"
+    "build": "webpack --config webpack.config.js",
+    "start": "webpack-dev-server --config bridge/webpack.config.js --port 8240"
   },
   "repository": "https://github.com/xura/emporium.git",
   "author": "Joe Badaczewski <joe307bad@gmail.com>",
