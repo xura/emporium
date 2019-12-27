@@ -5,7 +5,6 @@ import ky from "ky";
 import { IRepository } from "../interfaces/IRepository";
 
 @injectable()
-@singleton()
 export class HttpBin<T> implements IRepository<T> {
     private _store: Subject<T> = new Subject();
     // probably replace this queue with bottleneck package

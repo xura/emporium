@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { IRepository } from './interfaces/IRepository';
 
 @autoInjectable()
-@singleton()
 export class Emporium<T> implements IRepository<T> {
     private readonly _connection: () => Connection;
     private readonly _model: ObjectType<T>;

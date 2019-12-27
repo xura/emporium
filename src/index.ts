@@ -7,7 +7,6 @@ const initEmporium = () => {
         useClass: HttpBin
     });
 };
-alert('hey')
 
 export { initEmporium, Emporium };
 
