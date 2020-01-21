@@ -11,6 +11,7 @@
   "author": "Joe Badaczewski <joe307bad@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "@babel/runtime": "^7.8.3",
     "clean-webpack-plugin": "^3.0.0",
     "copy-webpack-plugin": "^5.0.4",
     "html-webpack-plugin": "^3.2.0",
@@ -24,11 +25,11 @@
     "webpack-dev-server": "^3.8.1"
   },
   "dependencies": {
-    "ky": "^0.15.0",
     "@types/async": "^3.0.2",
     "async": "^3.1.0",
+    "ky": "^0.15.0",
     "sql.js": "1.0.0",
-    "typeorm": "0.2.19",
-    "tsyringe": "^3.4.0"
+    "tsyringe": "^3.4.0",
+    "typeorm": "0.2.19"
   }
 }
