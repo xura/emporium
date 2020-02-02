@@ -29,6 +29,7 @@ export class Emporium<T> implements IRepository<T> {
     }
 
     save(entity: T): Promise<T> {
+        debugger;
         return this._getRepo()
             .then(repo => repo
                 .save(entity)
