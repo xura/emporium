@@ -1,12 +1,12 @@
-import { singleton, injectable } from "tsyringe";
-import { Subject } from "rxjs";
+import { injectable } from "tsyringe";
+import { BehaviorSubject } from "rxjs";
 import { AsyncQueue, queue } from "async";
 import ky from "ky";
 import { IRepository } from "../interfaces/IRepository";
 
 @injectable()
 export class HttpBin<T> implements IRepository<T> {
-    private _store: Subject<[number, T]> = new Subject();
+    private _store: BehaviorSubject<[number, T]> = new BehaviorSubject([1, {} as T]);
     // probably replace this queue with bottleneck package
     // then store each queued task by id in localforage
     private _queue: AsyncQueue<T> = queue(

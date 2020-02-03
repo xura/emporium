@@ -1,7 +1,7 @@
 import { Repository, Connection, ObjectType } from "typeorm";
 import { inject, autoInjectable, singleton } from "tsyringe";
 import { Observable } from 'rxjs';
-import { filter, flatMap } from 'rxjs/operators';
+import { filter, flatMap, startWith } from 'rxjs/operators';
 import { IRepository } from './interfaces/IRepository';
 
 @autoInjectable()
