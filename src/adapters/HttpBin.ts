@@ -6,18 +6,18 @@ import { IRepository } from "../interfaces/IRepository";
 
 @injectable()
 export class HttpBin<T> implements IRepository<T> {
-    private _store: Subject<T> = new Subject();
+    private _store: Subject<[number, T]> = new Subject();
     // probably replace this queue with bottleneck package
     // then store each queued task by id in localforage
     private _queue: AsyncQueue<T> = queue(
-        (task: T, callback: () => void) => {
-            this._store.next(task);
-            callback();
+        (task: T, callback: (finished: () => void) => void) => {
+            this._store.next([0, task]);
+            callback(() => this._store.next([1, task]));
         }, 2);
 
     save(entity: T) {
         this._queue.push(entity,
-            () => ky.post('https://httpbin.org/post'));
+            (finished?: any) => ky.post('https://httpbin.org/post').then(finished));
         return Promise.resolve(entity);
     }
 
