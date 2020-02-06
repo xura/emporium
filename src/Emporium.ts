@@ -1,7 +1,7 @@
 import { Repository, Connection, ObjectType } from "typeorm";
 import { inject, autoInjectable, singleton } from "tsyringe";
-import { Observable } from 'rxjs';
-import { filter, flatMap, startWith } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { filter, switchMap, flatMap, map, mergeMap } from 'rxjs/operators';
 import { IRepository } from './interfaces/IRepository';
 
 @autoInjectable()
@@ -47,11 +47,19 @@ export class Emporium<T> implements IRepository<T> {
     stream = (): Promise<Observable<[number, T]>> =>
         this._getRepo().then(repo => repo.stream());
 
-    streamAll = (): Promise<Observable<T[]>> =>
-        this._getRepo()
-            .then(repo => repo.stream())
-            .then(stream => stream.pipe(
-                filter(task => task[0] === 1),
-                flatMap(_ => this.find())
-            ))
+    streamAll = (): Promise<Observable<any>> => {
+        return this._getRepo()
+            .then(repo => {
+                debugger;
+                return repo.stream();
+            })
+            .then(stream => {
+                debugger;
+                return stream.pipe(map(_ => {
+                    debugger
+                    return this.find();
+                }))
+            });
+    }
+
 }
