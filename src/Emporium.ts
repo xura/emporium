@@ -29,20 +29,17 @@ export class Emporium<T> implements IRepository<T> {
         this._model = model;
     }
 
-    save = (entity: T): Promise<T> => {
-        debugger;
-        return this._getRepo()
+    save = (entity: T): Promise<T> =>
+        this._getRepo()
             .then(repo => repo
                 .save(entity)
-                .then(result => this._entityRepo.save(entity)));
-    }
+                .then(result => this._entityRepo.save(entity)))
 
-    find(): Promise<T[]> {
-        return this._getRepo()
+    find = (): Promise<T[]> =>
+        this._getRepo()
             .then(repo => repo
                 .find()
                 .then((result => this._entityRepo.find())));
-    }
 
     stream = (): Promise<Observable<[number, T]>> =>
         this._getRepo().then(repo => repo.stream());
@@ -50,5 +47,8 @@ export class Emporium<T> implements IRepository<T> {
     streamAll = (): Promise<Observable<any>> =>
         this._getRepo()
             .then(repo => repo.stream())
-            .then(stream => stream.pipe(map(_ => this.find())));
+            .then(stream => stream.pipe(
+                filter(task => task[0] === 1),
+                map(_ => this.find())
+            ));
 }
