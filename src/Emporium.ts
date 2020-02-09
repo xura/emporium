@@ -29,11 +29,13 @@ export class Emporium<T> implements IRepository<T> {
         this._model = model;
     }
 
-    save = (entity: T): Promise<T> =>
-        this._getRepo()
+    save = (entity: T): Promise<T> => {
+        debugger;
+        return this._getRepo()
             .then(repo => repo
                 .save(entity)
                 .then(result => this._entityRepo.save(entity)));
+    }
 
     find(): Promise<T[]> {
         return this._getRepo()
