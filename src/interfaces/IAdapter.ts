@@ -1,6 +1,4 @@
-import { Observable } from "rxjs";
-
 export interface IAdapter<T> {
-    save(entity: T): Promise<T>;
+    create(entity: T): Promise<T>;
     find(): Promise<T[]>;
 }

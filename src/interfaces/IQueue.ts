@@ -1,6 +1,6 @@
-import { Observable, BehaviorSubject } from "rxjs";
+import { Observable } from "rxjs";
 
 export interface IQueue<T> {
     stream(): Promise<Observable<[number, T]>>;
-    push(task: T): Promise<T>;
+    push(task: Promise<T>): Promise<T>;
 }

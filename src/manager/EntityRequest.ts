@@ -1,6 +1,5 @@
 import { Entity, Column, ObjectLiteral, PrimaryGeneratedColumn } from 'typeorm';
 
-
 export enum EntityRequestStatus {
     INITIATED,
     PROCESSED_LOCALLY,
