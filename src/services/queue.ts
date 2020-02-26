@@ -1,8 +1,9 @@
 import { BehaviorSubject } from "rxjs/internal/BehaviorSubject";
 import { AsyncQueue, queue } from "async";
 import { IQueue } from "../interfaces";
-import { singleton } from "tsyringe";
+import { singleton, injectable } from "tsyringe";
 
+@injectable()
 @singleton()
 export class Queue<T> implements IQueue<T> {
     private _store: BehaviorSubject<[number, T]> = new BehaviorSubject([1, {} as T]);

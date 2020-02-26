@@ -7,8 +7,9 @@ import errors from '../shared/errors';
 @autoInjectable()
 export class Manager<T> implements IManager<T> {
 
-    internalRepo?: Repository<T>;
-    requestRepo?: Repository<EntityRequest>;
+    getInternalRepo: (() => Repository<T>) | undefined;
+    getRequestRepo: (() => Repository<EntityRequest>) | undefined;
+
 
     constructor(
         model: ObjectType<T>,
@@ -16,18 +17,19 @@ export class Manager<T> implements IManager<T> {
         @inject("IAdapter") private externalRepo?: IAdapter<T>,
         @inject("IConnection") private connection?: IConnection
     ) {
-        this.internalRepo = this.connection?.connect.getRepository(model)
-        this.requestRepo = this.connection?.connect.getRepository(EntityRequest)
+        const cxn = this.connection;
+        this.getInternalRepo = cxn && (() => cxn.connect().getRepository(model))
+        this.getRequestRepo = cxn && (() => cxn.connect().getRepository(EntityRequest))
     }
 
     updateStatus = (entityRequest: EntityRequest, status: EntityRequestStatus) => {
         if (!entityRequest.id)
             return Promise.reject('Trying to update an Entity Request with no Id');
 
-        if (!this.requestRepo)
+        if (!this.getRequestRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
-        return this.requestRepo.update(entityRequest.id, {
+        return this.getRequestRepo().update(entityRequest.id, {
             RequestStatus: status
         });
     }
@@ -44,14 +46,14 @@ export class Manager<T> implements IManager<T> {
     }
 
     initiateEntityRequest = (entityRequest: EntityRequest) => {
-        if (!this.requestRepo)
+        if (!this.getRequestRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
-        return this.requestRepo.save(entityRequest);
+        return this.getRequestRepo().save(entityRequest);
     }
 
     create = async (entity: T) => {
-        if (!this.internalRepo)
+        if (!this.getInternalRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
         const initiateEntityRequest = {
@@ -62,7 +64,7 @@ export class Manager<T> implements IManager<T> {
         };
         debugger;
         const entityRequest = await this.initiateEntityRequest(initiateEntityRequest)
-        return this.internalRepo.save(entity)
+        return this.getInternalRepo().save(entity)
             .then(_ => this.updateStatus(
                 entityRequest, EntityRequestStatus.PROCESSED_LOCALLY)
             )

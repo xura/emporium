@@ -5,6 +5,6 @@ import { IConnection } from '../interfaces';
 @injectable()
 @singleton()
 export class Connection implements IConnection {
-    constructor(private connection: TypeOrmConnection) { }
-    connect = this.connection
+    constructor(private connection: () => TypeOrmConnection) { }
+    connect = () => this.connection()
 }
