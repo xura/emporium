@@ -6,19 +6,23 @@ import { AsyncQueue, queue, retryable, retry, AsyncFunction, AsyncResultCallback
 @injectable()
 export class HttpBin<T> implements IAdapter<T> {
 
-    request = () => new Promise<any>((resolve: any) => {
-        // setTimeout(() => {
-        //     debugger;
-        //     resolve(entity)
-        // }, 5000)
+    request = (callback: AsyncResultCallback<unknown, Error>, results: any): ((callback: AsyncResultCallback<unknown, Error>, results: any) => void) => {
         debugger;
-        return Promise.reject()
-    })
+        return (callback, results) => {
+            debugger;
+            callback(new Error('hey there'))
+        }
+    }
 
     create(entity: T) {
         //return ky.post('https://httpbin.org/post').then(_ => entity);
         return new Promise<T>(async resolve => {
-            retry(3, await this.request(), () => resolve())
+            retry(3, this.request((a: any, b: any) => {
+                debugger;
+            }, [1, 2, 3]), (a: any, b: any) => {
+                debugger;
+                resolve()
+            })
         })
     }
 
