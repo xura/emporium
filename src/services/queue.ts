@@ -27,4 +27,6 @@ export class Queue<T> implements IQueue<T> {
             ))
     }
 
+    pause = () => this._queue.pause()
+
 }

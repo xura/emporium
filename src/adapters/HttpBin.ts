@@ -1,14 +1,20 @@
-import { injectable } from "tsyringe";
+import { injectable, inject } from "tsyringe";
 import ky from "ky";
-import { IAdapter } from "../interfaces/IAdapter";
+import { IAdapter, IQueue } from "../interfaces";
 import { AsyncQueue, queue, retryable, retry, AsyncFunction, AsyncResultCallback } from "async";
 
 @injectable()
 export class HttpBin<T> implements IAdapter<T> {
 
-    request = (callback: AsyncResultCallback<unknown, Error>, results: any): ((callback: AsyncResultCallback<unknown, Error>, results: any) => void) => {
+    constructor(
+        @inject("IQueue") private queue: IQueue<T>
+    ) {
+
+    }
+
+    request = () => {
         debugger;
-        return (callback, results) => {
+        return (callback: any, results: any) => {
             debugger;
             callback(new Error('hey there'))
         }
@@ -16,14 +22,28 @@ export class HttpBin<T> implements IAdapter<T> {
 
     create(entity: T) {
         //return ky.post('https://httpbin.org/post').then(_ => entity);
-        return new Promise<T>(async resolve => {
-            retry(3, this.request((a: any, b: any) => {
-                debugger;
-            }, [1, 2, 3]), (a: any, b: any) => {
-                debugger;
-                resolve()
-            })
-        })
+        // return new Promise<T>(async resolve => {
+        //     retry(3, this.request(), (a: any, b: any) => {
+        //         debugger;
+        //         resolve()
+        //     })
+        // })
+
+        const request = () => async (callback: any, results: any) => {
+            debugger;
+            callback(
+                await ky.post('https://httpbin.org/status/500')
+                    .then(() => null)
+                    .catch(() => new Error())
+            )
+        };
+
+        return new Promise<T>(resolve => retry(1, request(), (err) => {
+            debugger;
+            if (err) this.queue.pause();
+
+            resolve(entity)
+        }))
     }
 
     find() {
