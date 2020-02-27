@@ -9,15 +9,11 @@ export class Emporium<T extends ObjectLiteral> {
     private _manager: IManager<T>;
 
     constructor(model: ObjectType<T>) {
-        debugger;
         this._manager = new Manager(model)
-        debugger;
     }
 
-    create = (entity: T): Promise<T> | undefined => {
-        debugger;
-        return this._manager.create(entity);
-    }
+    create = (entity: T): Promise<T> | undefined =>
+        this._manager.create(entity);
 
     // find = (findOptions = { order: { id: 'DESC' } } as FindManyOptions): Promise<T[]> =>
     //     this.repo.find().then((result => this._entityRepo.find(findOptions)));

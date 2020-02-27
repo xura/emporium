@@ -7,7 +7,6 @@ import { EntityRequest } from "./manager/EntityRequest";
 import { Queue, Connection } from "./services";
 
 const initEmporium = (connection: () => TypeOrmConnection) => {
-    debugger;
     container.register("IAdapter", { useClass: HttpBin }, { singleton: true });
     container.register("IQueue", { useClass: Queue }, { singleton: true });
     container.register("IManager", { useClass: Manager });

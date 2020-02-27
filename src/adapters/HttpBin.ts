@@ -6,8 +6,14 @@ import { IAdapter } from "../interfaces/IAdapter";
 export class HttpBin<T> implements IAdapter<T> {
 
     create(entity: T) {
-        debugger;
-        return ky.post('https://httpbin.org/post').then(_ => entity);
+        //return ky.post('https://httpbin.org/post').then(_ => entity);
+        return new Promise<T>(resolve => {
+            // debugger;
+            setTimeout(() => {
+                debugger;
+                resolve(entity)
+            }, 5000)
+        })
     }
 
     find() {

@@ -7,29 +7,32 @@ import errors from '../shared/errors';
 @autoInjectable()
 export class Manager<T> implements IManager<T> {
 
-    getInternalRepo: (() => Repository<T>) | undefined;
-    getRequestRepo: (() => Repository<EntityRequest>) | undefined;
-
+    _getInternalRepo: (() => Repository<T>) | undefined;
+    _getRequestRepo: (() => Repository<EntityRequest>) | undefined;
 
     constructor(
-        model: ObjectType<T>,
+        private model: ObjectType<T>,
         @inject("IQueue") private queue?: IQueue<T>,
         @inject("IAdapter") private externalRepo?: IAdapter<T>,
         @inject("IConnection") private connection?: IConnection
     ) {
         const cxn = this.connection;
-        this.getInternalRepo = cxn && (() => cxn.connect().getRepository(model))
-        this.getRequestRepo = cxn && (() => cxn.connect().getRepository(EntityRequest))
+
+        this._getInternalRepo =
+            cxn && (() => cxn.connect().getRepository(model))
+
+        this._getRequestRepo =
+            cxn && (() => cxn.connect().getRepository(EntityRequest))
     }
 
     updateStatus = (entityRequest: EntityRequest, status: EntityRequestStatus) => {
         if (!entityRequest.id)
             return Promise.reject('Trying to update an Entity Request with no Id');
 
-        if (!this.getRequestRepo)
+        if (!this._getRequestRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
-        return this.getRequestRepo().update(entityRequest.id, {
+        return this._getRequestRepo().update(entityRequest.id, {
             RequestStatus: status
         });
     }
@@ -42,29 +45,33 @@ export class Manager<T> implements IManager<T> {
         if (!this.externalRepo || !this.queue)
             return Promise.reject(errors.INJECTION_ERROR(['IAdapter', 'IQueue']))
 
-        return this.queue.push(this.externalRepo.create(JSON.parse(entity.Payload)));
+        return this.queue.push(
+            this.externalRepo.create(JSON.parse(entity.Payload))
+        );
     }
 
     initiateEntityRequest = (entityRequest: EntityRequest) => {
-        if (!this.getRequestRepo)
+        if (!this._getRequestRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
-        return this.getRequestRepo().save(entityRequest);
+        return this._getRequestRepo().save(entityRequest);
     }
 
     create = async (entity: T) => {
-        if (!this.getInternalRepo)
+        if (!this._getInternalRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
         const initiateEntityRequest = {
-            Type: typeof entity,
+            Type: this.model.name,
             RequestType: EntityRequestType.CREATE,
             RequestStatus: EntityRequestStatus.INITIATED,
             Payload: JSON.stringify(entity)
         };
-        debugger;
-        const entityRequest = await this.initiateEntityRequest(initiateEntityRequest)
-        return this.getInternalRepo().save(entity)
+
+        const entityRequest =
+            await this.initiateEntityRequest(initiateEntityRequest)
+
+        return this._getInternalRepo().save(entity)
             .then(_ => this.updateStatus(
                 entityRequest, EntityRequestStatus.PROCESSED_LOCALLY)
             )
