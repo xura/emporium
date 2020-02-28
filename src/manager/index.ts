@@ -41,16 +41,18 @@ export class Manager<T> implements IManager<T> {
 
     stream = () => { }
 
-    addToQueue = (entity: EntityRequest) => {
+    addToQueue = (entityRequest: EntityRequest) => {
         if (!this.queue)
             return Promise.reject(errors.INJECTION_ERROR(['IQueue']))
 
         const task = () =>
             this.externalRepo
-                ? this.externalRepo.create(JSON.parse(entity.Payload))
+                ? this.externalRepo.create(
+                    JSON.parse(entityRequest.Payload)
+                )
                 : Promise.reject(errors.INJECTION_ERROR(['IAdapter']))
 
-        return this.queue.push(task);
+        return this.queue.push(entityRequest, task);
     }
 
     initiateEntityRequest = (entityRequest: EntityRequest) => {

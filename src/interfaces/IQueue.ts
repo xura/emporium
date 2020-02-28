@@ -1,7 +1,10 @@
 import { Observable } from "rxjs";
+import { EntityRequest } from "../manager/EntityRequest";
 
 export interface IQueue<T> {
     stream(): Promise<Observable<[number, T]>>;
-    push(task: () => Promise<T>): Promise<any>;
-    pause(): void;
+    push(
+        entityRequest: EntityRequest,
+        task: () => Promise<T>
+    ): Promise<any>;
 }
