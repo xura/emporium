@@ -6,8 +6,11 @@ import { AsyncQueue, queue, retryable, retry, AsyncFunction, AsyncResultCallback
 @injectable()
 export class HttpBin<T> implements IAdapter<T> {
 
-    create = (entity: T) =>
-        ky.post('https://httpbin.org/status/500').then(_ => entity)
+    create = (entity: T) => {
+        debugger;
+        return ky.post('https://httpbin.org/status/500').then(_ => entity)
+    }
+
 
     find() {
         return ky.post('https://httpbin.org/get').then(_ => []);
