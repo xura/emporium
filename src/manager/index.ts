@@ -13,7 +13,6 @@ export class Manager<T> implements IManager<T> {
     constructor(
         private model: ObjectType<T>,
         @inject("IQueue") private queue?: IQueue<T>,
-        @inject("IAdapter") private externalRepo?: IAdapter<T>,
         @inject("IConnection") private connection?: IConnection
     ) {
         const cxn = this.connection;
@@ -25,7 +24,7 @@ export class Manager<T> implements IManager<T> {
             cxn && (() => cxn.connect().getRepository(EntityRequest))
     }
 
-    updateStatus = (entityRequest: EntityRequest, status: EntityRequestStatus) => {
+    private _markAsProcessedLocally = (entityRequest: EntityRequest) => {
         if (!entityRequest.id)
             return Promise.reject('Trying to update an Entity Request with no Id');
 
@@ -33,7 +32,7 @@ export class Manager<T> implements IManager<T> {
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
         return this._getRequestRepo().update(entityRequest.id, {
-            RequestStatus: status
+            RequestStatus: EntityRequestStatus.PROCESSED_LOCALLY
         });
     }
 
@@ -45,14 +44,7 @@ export class Manager<T> implements IManager<T> {
         if (!this.queue)
             return Promise.reject(errors.INJECTION_ERROR(['IQueue']))
 
-        const task = () =>
-            this.externalRepo
-                ? this.externalRepo.create(
-                    JSON.parse(entityRequest.Payload)
-                )
-                : Promise.reject(errors.INJECTION_ERROR(['IAdapter']))
-
-        return this.queue.push(entityRequest, task);
+        return this.queue.push(entityRequest);
     }
 
     initiateEntityRequest = (entityRequest: EntityRequest) => {
@@ -74,17 +66,14 @@ export class Manager<T> implements IManager<T> {
             DateCreated: new Date()
         };
 
-        debugger;
-
         const entityRequest =
             await this.initiateEntityRequest(initiateEntityRequest)
 
-        const entityRequestProcessedLocally = () => this.updateStatus(
-            entityRequest, EntityRequestStatus.PROCESSED_LOCALLY
-        );
+        const markEntityRequestAsProcessedLocally =
+            () => this._markAsProcessedLocally(entityRequest);
 
         return this._getInternalRepo().save(entity)
-            .then(entityRequestProcessedLocally)
+            .then(markEntityRequestAsProcessedLocally)
             .then(_ => this.addToQueue(entityRequest));
     }
 

@@ -3,8 +3,5 @@ import { EntityRequest } from "../manager/EntityRequest";
 
 export interface IQueue<T> {
     stream(): Promise<Observable<[number, T]>>;
-    push(
-        entityRequest: EntityRequest,
-        task: () => Promise<T>
-    ): Promise<any>;
+    push(entityRequest: EntityRequest): Promise<any>;
 }
