@@ -8,7 +8,7 @@ export class HttpBin<T> implements IAdapter<T> {
 
     create = (entity: T) => {
         debugger;
-        return ky.post('https://httpbin.org/status/500').then(_ => entity)
+        return ky.get('https://httpbin.org/status/200').then(_ => entity)
     }
 
 

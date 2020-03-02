@@ -31,4 +31,7 @@ export class EntityRequest implements ObjectLiteral {
 
     @Column()
     Payload: string = '';
+
+    @Column({ type: 'datetime', nullable: true })
+    DateCreated?: Date;
 }

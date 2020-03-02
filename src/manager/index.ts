@@ -70,16 +70,21 @@ export class Manager<T> implements IManager<T> {
             Type: this.model.name,
             RequestType: EntityRequestType.CREATE,
             RequestStatus: EntityRequestStatus.INITIATED,
-            Payload: JSON.stringify(entity)
+            Payload: JSON.stringify(entity),
+            DateCreated: new Date()
         };
+
+        debugger;
 
         const entityRequest =
             await this.initiateEntityRequest(initiateEntityRequest)
 
+        const entityRequestProcessedLocally = () => this.updateStatus(
+            entityRequest, EntityRequestStatus.PROCESSED_LOCALLY
+        );
+
         return this._getInternalRepo().save(entity)
-            .then(_ => this.updateStatus(
-                entityRequest, EntityRequestStatus.PROCESSED_LOCALLY)
-            )
+            .then(entityRequestProcessedLocally)
             .then(_ => this.addToQueue(entityRequest));
     }
 
