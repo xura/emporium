@@ -3,9 +3,7 @@ import { Entity, Column, ObjectLiteral, PrimaryGeneratedColumn } from 'typeorm';
 export enum EntityRequestStatus {
     INITIATED,
     PROCESSED_LOCALLY,
-    QUEUED,
-    PROCESSED_EXTERNALLY,
-    IN_SYNC
+    PROCESSED_EXTERNALLY
 }
 
 export enum EntityRequestType {

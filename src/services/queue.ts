@@ -56,18 +56,19 @@ export class Queue<T> implements IQueue<T> {
         if (!this._getRequestRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
-        const unprocessedEntityRequests = orderBy<EntityRequest>('DateCreated')('desc')(
+        const pendingEntityRequests = orderBy<EntityRequest>('DateCreated')('desc')(
             await this._getRequestRepo().find({
                 RequestStatus: EntityRequestStatus.PROCESSED_LOCALLY
             })
         )
 
-        if (this._queue.idle() && !!unprocessedEntityRequests.length) {
+        if (this._queue.idle() && !!pendingEntityRequests.length) {
 
-            const externalRequests = unprocessedEntityRequests.map(entityRequest =>
+            const externalRequests = pendingEntityRequests.map(entityRequest =>
                 this._getExternalRequest(entityRequest)
             )
 
+            // TODO run callbacks for each external request that marks the request as PROCESSED_EXTERNALLY
             return new Promise(async resolve =>
                 this._queue.push(
                     await series(externalRequests),
