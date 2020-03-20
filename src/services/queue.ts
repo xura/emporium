@@ -2,9 +2,9 @@ import { BehaviorSubject } from "rxjs/internal/BehaviorSubject";
 import { AsyncQueue, queue, asyncify, retry, series } from "async";
 import { IQueue, IConnection, IAdapter } from "../interfaces";
 import { singleton, injectable } from "tsyringe";
-import { EntityRequest, EntityRequestStatus } from "../manager/EntityRequest";
+import { EntityRequest, EntityRequestStatus, EntityRequestType } from "../manager/EntityRequest";
 import { inject } from "tsyringe";
-import { Repository } from "typeorm";
+import { Repository, UpdateResult } from "typeorm";
 import errors from "../shared/errors";
 import { orderBy, map } from 'lodash/fp';
 import ky from "ky";
@@ -17,10 +17,10 @@ export class Queue<T> implements IQueue<T> {
 
     private _queue: AsyncQueue<any> = queue((task, callback) => callback(), 1);
 
-    private _retry = (task: () => Promise<T>) => {
+    private _retry = (task: () => Promise<EntityRequest>) => {
 
         const request = () =>
-            (callback: (err: Error | null, entityRequest?: T) => void) =>
+            (callback: (err: Error | null, entityRequest?: EntityRequest) => void) =>
                 task()
                     .then(entity => callback(null, entity))
                     .catch(err => callback(err))
@@ -37,7 +37,19 @@ export class Queue<T> implements IQueue<T> {
         if (!this._externalRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IAdapter']))
 
-        return await this._retry(this._externalRepo.mapToExternalRequest<T>(entityRequest))
+        return await this._retry(this._externalRepo.mapToExternalRequest(entityRequest))
+    }
+
+    private _markAsProcessedExternally = (entityRequest: any): Promise<UpdateResult> => {
+        if (!entityRequest.id)
+            return Promise.reject('Trying to update an Entity Request with no Id');
+
+        if (!this._getRequestRepo)
+            return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
+
+        return this._getRequestRepo().update(entityRequest.id, {
+            RequestStatus: EntityRequestStatus.PROCESSED_EXTERNALLY
+        });
     }
 
     constructor(
@@ -65,7 +77,9 @@ export class Queue<T> implements IQueue<T> {
         if (this._queue.idle() && !!pendingEntityRequests.length) {
 
             const externalRequests = pendingEntityRequests.map(entityRequest =>
-                this._getExternalRequest(entityRequest)
+                () => this._getExternalRequest(entityRequest)().then(
+                    this._markAsProcessedExternally
+                )
             )
 
             // TODO run callbacks for each external request that marks the request as PROCESSED_EXTERNALLY
