@@ -1,13 +1,12 @@
 import { BehaviorSubject } from "rxjs/internal/BehaviorSubject";
-import { AsyncQueue, queue, asyncify, retry, series } from "async";
+import { AsyncQueue, queue, retry, series } from "async";
 import { IQueue, IConnection, IAdapter } from "../interfaces";
 import { singleton, injectable } from "tsyringe";
-import { EntityRequest, EntityRequestStatus, EntityRequestType } from "../manager/EntityRequest";
+import { EntityRequest, EntityRequestStatus } from "../manager/EntityRequest";
 import { inject } from "tsyringe";
 import { Repository, UpdateResult } from "typeorm";
 import errors from "../shared/errors";
-import { orderBy, map } from 'lodash/fp';
-import ky from "ky";
+import { orderBy } from 'lodash/fp';
 
 @injectable()
 @singleton()
@@ -15,39 +14,44 @@ export class Queue<T> implements IQueue<T> {
     private _store: BehaviorSubject<[number, T]> =
         new BehaviorSubject([1, {} as T]);
 
-    private _queue: AsyncQueue<any> = queue((task, callback) => callback(), 1);
+    private _initialQueue: () => AsyncQueue<any> = () => queue(
+        async (task, callback) => task(callback)
+    , 1);
+
+    private _queue: AsyncQueue<any> = this._initialQueue()
 
     private _retry = (task: () => Promise<EntityRequest>) => {
-
+        
         const request = () =>
             (callback: (err: Error | null, entityRequest?: EntityRequest) => void) =>
-                task()
-                    .then(entity => callback(null, entity))
-                    .catch(err => callback(err))
+                task().then(entity => callback(null, entity)).catch(err => callback(err))
 
-        return new Promise<T>((resolve, reject) => retry(3, request(), (err, entity: T) => {
-            if (err) return this._queue.remove(() => true);
+        return new Promise<T>(resolve => retry(3, request(), (err, entity: T) => {
+            if (err) {
+                this._queue = this._initialQueue()
+                return;
+            };
             resolve(entity)
         }));
     }
 
     private _getRequestRepo: (() => Repository<EntityRequest>) | undefined;
 
-    private _getExternalRequest = (entityRequest: EntityRequest) => async () => {
+    private _getExternalRequest = async (entityRequest: EntityRequest) => {
         if (!this._externalRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IAdapter']))
 
         return await this._retry(this._externalRepo.mapToExternalRequest(entityRequest))
     }
 
-    private _markAsProcessedExternally = (entityRequest: any): Promise<UpdateResult> => {
+    private _markAsProcessedExternally = async (entityRequest: any): Promise<UpdateResult> => {
         if (!entityRequest.id)
             return Promise.reject('Trying to update an Entity Request with no Id');
 
         if (!this._getRequestRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
-        return this._getRequestRepo().update(entityRequest.id, {
+        return await this._getRequestRepo().update(entityRequest.id, {
             RequestStatus: EntityRequestStatus.PROCESSED_EXTERNALLY
         });
     }
@@ -74,25 +78,30 @@ export class Queue<T> implements IQueue<T> {
             })
         )
 
-        if (this._queue.idle() && !!pendingEntityRequests.length) {
-
+        if (!this._queue.started && pendingEntityRequests.length > 1) {
+            
             const externalRequests = pendingEntityRequests.map(entityRequest =>
-                () => this._getExternalRequest(entityRequest)().then(
-                    this._markAsProcessedExternally
+                (callback: any) => this._getExternalRequest(entityRequest).then(entity => 
+                    callback(null, this._markAsProcessedExternally(entity))
                 )
             )
-
-            // TODO run callbacks for each external request that marks the request as PROCESSED_EXTERNALLY
+            
             return new Promise(async resolve =>
                 this._queue.push(
-                    await series(externalRequests),
+                    async (callback: any) => 
+                        await series(externalRequests, (err, results) => {
+                            if(err) return callback(err)
+                            return callback(null, results)
+                        }),
                     () => resolve(entityRequest)
                 ))
         }
 
         return new Promise(async resolve =>
             this._queue.push(
-                this._getExternalRequest(entityRequest),
+                (callback: any) => this._getExternalRequest(entityRequest).then(entity => 
+                    callback(null, this._markAsProcessedExternally(entity))
+                ),
                 () => resolve(entityRequest)
             ))
     }

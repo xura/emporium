@@ -9,7 +9,7 @@ export class HttpBin<T> implements IAdapter<T> {
     mapToExternalRequest(entityRequest: EntityRequest): () => Promise<EntityRequest> {
         switch (entityRequest.RequestType) {
             case EntityRequestType.CREATE:
-                return () => ky.post('https://httpbin.org/status/500').then(_ => ({} as EntityRequest))
+                return () => ky.post('https://httpbin.org/status/200').then(_ => entityRequest)
             case EntityRequestType.UPDATE:
                 return () => ky.put('https://httpbin.org/status/500').then(_ => ({} as EntityRequest))
             case EntityRequestType.DELETE:
@@ -18,7 +18,6 @@ export class HttpBin<T> implements IAdapter<T> {
     }
 
     create = (entity: T) => {
-        debugger;
         return ky.post('https://httpbin.org/status/500').then(_ => entity)
     }
 
