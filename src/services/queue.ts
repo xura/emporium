@@ -11,8 +11,6 @@ import { orderBy } from 'lodash/fp';
 @injectable()
 @singleton()
 export class Queue<T> implements IQueue<T> {
-    private _store: BehaviorSubject<[number, T]> =
-        new BehaviorSubject([1, {} as T]);
 
     private _initialQueue: () => AsyncQueue<any> = () => queue(
         async (task, callback) => task(callback)
@@ -60,15 +58,16 @@ export class Queue<T> implements IQueue<T> {
         @inject("IConnection") private _connection?: IConnection,
         @inject("IAdapter") private _externalRepo?: IAdapter<T>,
     ) {
+
         const cxn = this._connection;
 
         this._getRequestRepo =
             cxn && (() => cxn.connect().getRepository(EntityRequest))
     }
 
-    stream = () => Promise.resolve(this._store);
+    stream: BehaviorSubject<[number, T]> = new BehaviorSubject([1, {} as T]);
 
-    push = async (entityRequest: EntityRequest) => {
+    async push(entityRequest: EntityRequest) {
         if (!this._getRequestRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 

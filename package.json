@@ -13,6 +13,7 @@
   "devDependencies": {
     "@babel/runtime": "^7.8.3",
     "@types/lodash": "^4.14.149",
+    "alsatian": "^3.2.1",
     "clean-webpack-plugin": "^3.0.0",
     "copy-webpack-plugin": "^5.0.4",
     "html-webpack-plugin": "^3.2.0",
@@ -20,6 +21,7 @@
     "lodash": "^4.17.15",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^6.5.3",
+    "tap-bark": "^2.3.1",
     "ts-loader": "^6.2.0",
     "typescript": "^3.6.3",
     "webpack": "^4.41.0",
