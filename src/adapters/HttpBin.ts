@@ -1,5 +1,5 @@
 import { injectable, inject } from "tsyringe";
-import ky from "ky";
+import ky from "ky-universal";
 import { IAdapter, IQueue } from "../interfaces";
 import { EntityRequest, EntityRequestType } from '../manager/EntityRequest';
 

@@ -1,25 +1,25 @@
 import { BehaviorSubject } from "rxjs/internal/BehaviorSubject";
 import { AsyncQueue, queue, retry, series } from "async";
 import { IQueue, IConnection, IAdapter } from "../interfaces";
-import { singleton, injectable } from "tsyringe";
+import { singleton, autoInjectable } from "tsyringe";
 import { EntityRequest, EntityRequestStatus } from "../manager/EntityRequest";
 import { inject } from "tsyringe";
 import { Repository, UpdateResult } from "typeorm";
 import errors from "../shared/errors";
 import { orderBy } from 'lodash/fp';
 
-@injectable()
+@autoInjectable()
 @singleton()
 export class Queue<T> implements IQueue<T> {
 
     private _initialQueue: () => AsyncQueue<any> = () => queue(
         async (task, callback) => task(callback)
-    , 1);
+        , 1);
 
     private _queue: AsyncQueue<any> = this._initialQueue()
 
     private _retry = (task: () => Promise<EntityRequest>) => {
-        
+
         const request = () =>
             (callback: (err: Error | null, entityRequest?: EntityRequest) => void) =>
                 task().then(entity => callback(null, entity)).catch(err => callback(err))
@@ -65,9 +65,7 @@ export class Queue<T> implements IQueue<T> {
             cxn && (() => cxn.connect().getRepository(EntityRequest))
     }
 
-    stream: BehaviorSubject<[number, T]> = new BehaviorSubject([1, {} as T]);
-
-    async push(entityRequest: EntityRequest) {
+    push = async (entityRequest: EntityRequest) => {
         if (!this._getRequestRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
@@ -78,18 +76,18 @@ export class Queue<T> implements IQueue<T> {
         )
 
         if (!this._queue.started && pendingEntityRequests.length > 1) {
-            
+
             const externalRequests = pendingEntityRequests.map(entityRequest =>
-                (callback: any) => this._getExternalRequest(entityRequest).then(entity => 
+                (callback: any) => this._getExternalRequest(entityRequest).then(entity =>
                     callback(null, this._markAsProcessedExternally(entity))
                 )
             )
-            
+
             return new Promise(async resolve =>
                 this._queue.push(
-                    async (callback: any) => 
+                    async (callback: any) =>
                         await series(externalRequests, (err, results) => {
-                            if(err) return callback(err)
+                            if (err) return callback(err)
                             return callback(null, results)
                         }),
                     () => resolve(entityRequest)
@@ -98,7 +96,7 @@ export class Queue<T> implements IQueue<T> {
 
         return new Promise(async resolve =>
             this._queue.push(
-                (callback: any) => this._getExternalRequest(entityRequest).then(entity => 
+                (callback: any) => this._getExternalRequest(entityRequest).then(entity =>
                     callback(null, this._markAsProcessedExternally(entity))
                 ),
                 () => resolve(entityRequest)

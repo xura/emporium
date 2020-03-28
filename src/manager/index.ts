@@ -3,6 +3,7 @@ import { inject, autoInjectable } from "tsyringe";
 import { EntityRequest, EntityRequestStatus, EntityRequestType } from "./EntityRequest";
 import { IManager, IAdapter, IConnection, IQueue } from "../interfaces";
 import errors from '../shared/errors';
+import { BehaviorSubject } from "rxjs";
 
 @autoInjectable()
 export class Manager<T> implements IManager<T> {
@@ -38,13 +39,15 @@ export class Manager<T> implements IManager<T> {
 
     initiateRequest = () => { }
 
-    stream = () => { }
+    stream: BehaviorSubject<T> = new BehaviorSubject({} as T);
 
     addToQueue = (entityRequest: EntityRequest) => {
         if (!this.queue)
             return Promise.reject(errors.INJECTION_ERROR(['IQueue']))
 
-        return this.queue.push(entityRequest);
+        this.queue.push(entityRequest)
+
+        return Promise.resolve(JSON.parse(entityRequest.Payload));
     }
 
     initiateEntityRequest = (entityRequest: EntityRequest) => {
@@ -72,8 +75,15 @@ export class Manager<T> implements IManager<T> {
         const markEntityRequestAsProcessedLocally =
             () => this._markAsProcessedLocally(entityRequest);
 
+        // TODO how do we get the newly created ID to return from internalRepo.save?
+        // theoretically it could not be saved or we could be waiting for it to be saved
+        // so in practice, we would need a way of updating records that havent been externally saved
+        // that will eventually be reconciled
+        // it may be possible to find if an EntityRequest has first been processed externally, if it hasnt,
+        // edit the "insert" record that hasnt been processed externally yet
         return this._getInternalRepo().save(entity)
             .then(markEntityRequestAsProcessedLocally)
+            .then(entity => this.stream.next(entity.raw))
             .then(_ => this.addToQueue(entityRequest));
     }
 
