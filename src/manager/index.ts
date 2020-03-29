@@ -11,12 +11,19 @@ export class Manager<T> implements IManager<T> {
     _getInternalRepo: (() => Repository<T>) | undefined;
     _getRequestRepo: (() => Repository<EntityRequest>) | undefined;
 
+    stream: BehaviorSubject<[number, T]> = new BehaviorSubject([0, {} as T]);
+
     constructor(
         private model: ObjectType<T>,
         @inject("IQueue") private queue?: IQueue<T>,
         @inject("IConnection") private connection?: IConnection
     ) {
         const cxn = this.connection;
+
+        this.queue &&
+            this.queue.processedExternally.subscribe(
+                entity => this.stream.next([1, entity])
+            )
 
         this._getInternalRepo =
             cxn && (() => cxn.connect().getRepository(model))
@@ -34,12 +41,8 @@ export class Manager<T> implements IManager<T> {
 
         return this._getRequestRepo().update(entityRequest.id, {
             RequestStatus: EntityRequestStatus.PROCESSED_LOCALLY
-        });
+        }).then(() => entityRequest.Payload);
     }
-
-    initiateRequest = () => { }
-
-    stream: BehaviorSubject<T> = new BehaviorSubject({} as T);
 
     addToQueue = (entityRequest: EntityRequest) => {
         if (!this.queue)
@@ -47,7 +50,7 @@ export class Manager<T> implements IManager<T> {
 
         this.queue.push(entityRequest)
 
-        return Promise.resolve(JSON.parse(entityRequest.Payload));
+        return Promise.resolve(entityRequest.Payload);
     }
 
     initiateEntityRequest = (entityRequest: EntityRequest) => {
@@ -65,7 +68,7 @@ export class Manager<T> implements IManager<T> {
             Type: this.model.name,
             RequestType: EntityRequestType.CREATE,
             RequestStatus: EntityRequestStatus.INITIATED,
-            Payload: JSON.stringify(entity),
+            Payload: entity,
             DateCreated: new Date()
         };
 
@@ -80,10 +83,10 @@ export class Manager<T> implements IManager<T> {
         // so in practice, we would need a way of updating records that havent been externally saved
         // that will eventually be reconciled
         // it may be possible to find if an EntityRequest has first been processed externally, if it hasnt,
-        // edit the "insert" record that hasnt been processed externally yet
+        // ...
         return this._getInternalRepo().save(entity)
             .then(markEntityRequestAsProcessedLocally)
-            .then(entity => this.stream.next(entity.raw))
+            .then(entity => this.stream.next([0, entity]))
             .then(_ => this.addToQueue(entityRequest));
     }
 

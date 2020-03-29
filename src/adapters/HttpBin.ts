@@ -6,14 +6,11 @@ import { EntityRequest, EntityRequestType } from '../manager/EntityRequest';
 @injectable()
 export class HttpBin<T> implements IAdapter<T> {
 
-    mapToExternalRequest(entityRequest: EntityRequest): () => Promise<EntityRequest> {
+    mapToExternalRequest(entityRequest: EntityRequest): () => Promise<T> {
         switch (entityRequest.RequestType) {
             case EntityRequestType.CREATE:
-                return () => ky.post('https://httpbin.org/status/200').then(_ => entityRequest)
-            case EntityRequestType.UPDATE:
-                return () => ky.put('https://httpbin.org/status/500').then(_ => ({} as EntityRequest))
-            case EntityRequestType.DELETE:
-                return () => ky.delete('https://httpbin.org/status/500').then(_ => ({} as EntityRequest))
+            default:
+                return () => ky.post('https://httpbin.org/status/200').then((response: Response) => response.json())
         }
     }
 

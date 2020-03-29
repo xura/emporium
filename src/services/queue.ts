@@ -12,16 +12,18 @@ import { orderBy } from 'lodash/fp';
 @singleton()
 export class Queue<T> implements IQueue<T> {
 
+    processedExternally: BehaviorSubject<T> = new BehaviorSubject({} as T);
+
     private _initialQueue: () => AsyncQueue<any> = () => queue(
         async (task, callback) => task(callback)
         , 1);
 
     private _queue: AsyncQueue<any> = this._initialQueue()
 
-    private _retry = (task: () => Promise<EntityRequest>) => {
+    private _retry = (task: () => Promise<T>) => {
 
         const request = () =>
-            (callback: (err: Error | null, entityRequest?: EntityRequest) => void) =>
+            (callback: (err: Error | null, entityRequest?: T) => void) =>
                 task().then(entity => callback(null, entity)).catch(err => callback(err))
 
         return new Promise<T>(resolve => retry(3, request(), (err, entity: T) => {
@@ -42,15 +44,18 @@ export class Queue<T> implements IQueue<T> {
         return await this._retry(this._externalRepo.mapToExternalRequest(entityRequest))
     }
 
-    private _markAsProcessedExternally = async (entityRequest: any): Promise<UpdateResult> => {
-        if (!entityRequest.id)
+    private _markAsProcessedExternally = async (entity: any): Promise<UpdateResult> => {
+        if (!entity.id)
             return Promise.reject('Trying to update an Entity Request with no Id');
 
         if (!this._getRequestRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
-        return await this._getRequestRepo().update(entityRequest.id, {
+        return await this._getRequestRepo().update(entity.id, {
             RequestStatus: EntityRequestStatus.PROCESSED_EXTERNALLY
+        }).then(() => {
+            this.processedExternally.next(entity)
+            return entity;
         });
     }
 
