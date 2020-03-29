@@ -14,6 +14,16 @@ export class ManagerTestFixture {
     @Test('Creating an EntityRequest emits a new event to the Manager.stream BehaviorSubject')
     public ManagerStreamTest() {
         const manager = new Manager(Achievement);
+
+        manager.stream.subscribe(entity => {
+            debugger;
+        });
+
+        manager.create({
+            description: "Description",
+            title: "Title"
+        })
+
         Expect(true).toBe(true);
     }
 }

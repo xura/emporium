@@ -10,7 +10,11 @@ export class HttpBin<T> implements IAdapter<T> {
         switch (entityRequest.RequestType) {
             case EntityRequestType.CREATE:
             default:
-                return () => ky.post('https://httpbin.org/status/200').then((response: Response) => response.json())
+                return () => ky.post('https://httpbin.org/status/200').then((response: Response) => {
+                    return response.json()
+                }).catch(e => {
+                    debugger
+                })
         }
     }
 

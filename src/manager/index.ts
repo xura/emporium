@@ -8,8 +8,8 @@ import { BehaviorSubject } from "rxjs";
 @autoInjectable()
 export class Manager<T> implements IManager<T> {
 
-    _getInternalRepo: (() => Repository<T>) | undefined;
-    _getRequestRepo: (() => Repository<EntityRequest>) | undefined;
+    private _getInternalRepo: (() => Repository<T>) | undefined;
+    private _getRequestRepo: (() => Repository<EntityRequest>) | undefined;
 
     stream: BehaviorSubject<[number, T]> = new BehaviorSubject([0, {} as T]);
 
@@ -44,7 +44,7 @@ export class Manager<T> implements IManager<T> {
         }).then(() => entityRequest.Payload);
     }
 
-    addToQueue = (entityRequest: EntityRequest) => {
+    private _addToQueue = (entityRequest: EntityRequest) => {
         if (!this.queue)
             return Promise.reject(errors.INJECTION_ERROR(['IQueue']))
 
@@ -53,7 +53,7 @@ export class Manager<T> implements IManager<T> {
         return Promise.resolve(entityRequest.Payload);
     }
 
-    initiateEntityRequest = (entityRequest: EntityRequest) => {
+    private _initiateEntityRequest = (entityRequest: EntityRequest) => {
         if (!this._getRequestRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
@@ -73,7 +73,7 @@ export class Manager<T> implements IManager<T> {
         };
 
         const entityRequest =
-            await this.initiateEntityRequest(initiateEntityRequest)
+            await this._initiateEntityRequest(initiateEntityRequest)
 
         const markEntityRequestAsProcessedLocally =
             () => this._markAsProcessedLocally(entityRequest);
@@ -86,8 +86,11 @@ export class Manager<T> implements IManager<T> {
         // ...
         return this._getInternalRepo().save(entity)
             .then(markEntityRequestAsProcessedLocally)
-            .then(entity => this.stream.next([0, entity]))
-            .then(_ => this.addToQueue(entityRequest));
+            .then(entity => {
+                this.stream.next([0, entity])
+                return Promise.resolve(entity);
+            })
+            .then(_ => this._addToQueue(entityRequest));
     }
 
     update = () => { }
