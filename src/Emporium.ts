@@ -19,10 +19,7 @@ export class Emporium<T extends ObjectLiteral> {
     // find = (findOptions = { order: { id: 'DESC' } } as FindManyOptions): Promise<T[]> =>
     //     this.repo.find().then((result => this._entityRepo.find(findOptions)));
 
-    stream = (): Promise<Observable<[number, T]>> => {
-        debugger;
-        return Promise.resolve(of())//this._manager.stream)
-    };
+    stream = (): Promise<Observable<any>> => Promise.resolve(of())
 
-    streamAll = (): Promise<Observable<any>> => Promise.resolve(of())//this._manager.stream)
+    streamAll = (): Promise<Observable<any>> => Promise.resolve(of(Promise.resolve()))
 }
