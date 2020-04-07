@@ -1,0 +1,33 @@
+"""
+The javascript `Date` as string. Type represents date and time as the ISO Date string.
+"""
+scalar DateTime
+
+type Entity {
+  _id: ID!
+  Type: Float!
+  Fields: JSON!
+  DateCreated: DateTime!
+  DateUpdated: DateTime!
+}
+
+input EntityInput {
+  Type: Float!
+  Fields: JSON!
+  DateCreated: DateTime!
+  DateUpdated: DateTime!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+type Mutation {
+  createEntity(input: EntityInput!): Entity!
+}
+
+type Query {
+  entities: [Entity!]!
+  entitiesByType(Type: Float!): [Entity!]!
+}

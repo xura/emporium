@@ -4,6 +4,7 @@ import { EntityRequest, EntityRequestStatus, EntityRequestType } from "./EntityR
 import { IManager, IAdapter, IConnection, IQueue } from "../interfaces";
 import errors from '../shared/errors';
 import { BehaviorSubject } from "rxjs";
+declare function assert(value: unknown): asserts value;
 
 @autoInjectable()
 export class Manager<T> implements IManager<T> {
@@ -11,7 +12,30 @@ export class Manager<T> implements IManager<T> {
     private _getInternalRepo: (() => Repository<T>) | undefined;
     private _getRequestRepo: (() => Repository<EntityRequest>) | undefined;
 
-    stream: BehaviorSubject<[number, T]> = new BehaviorSubject([0, {} as T]);
+    private _markAsProcessedLocally = (entityRequest: EntityRequest) => {
+        assert(entityRequest.id)
+        assert(this._getRequestRepo)
+
+        return this._getRequestRepo().update(entityRequest.id, {
+            RequestStatus: EntityRequestStatus.PROCESSED_LOCALLY
+        }).then(() => JSON.parse(entityRequest.Payload));
+    }
+
+    private _addToQueue = (entityRequest: EntityRequest) => {
+        if (!this.queue)
+            return Promise.reject(errors.INJECTION_ERROR(['IQueue']))
+
+        this.queue.push(entityRequest)
+
+        return Promise.resolve(JSON.parse(entityRequest.Payload));
+    }
+
+    private _initiateEntityRequest = (entityRequest: EntityRequest) => {
+        if (!this._getRequestRepo)
+            return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
+
+        return this._getRequestRepo().save(entityRequest);
+    }
 
     constructor(
         private model: ObjectType<T>,
@@ -22,7 +46,10 @@ export class Manager<T> implements IManager<T> {
 
         this.queue &&
             this.queue.processedExternally.subscribe(
-                entity => this.stream.next([1, entity])
+                entity => {
+                    debugger;
+                    this.stream.next([1, entity])
+                }
             )
 
         this._getInternalRepo =
@@ -32,43 +59,17 @@ export class Manager<T> implements IManager<T> {
             cxn && (() => cxn.connect().getRepository(EntityRequest))
     }
 
-    private _markAsProcessedLocally = (entityRequest: EntityRequest) => {
-        if (!entityRequest.id)
-            return Promise.reject('Trying to update an Entity Request with no Id');
-
-        if (!this._getRequestRepo)
-            return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
-
-        return this._getRequestRepo().update(entityRequest.id, {
-            RequestStatus: EntityRequestStatus.PROCESSED_LOCALLY
-        }).then(() => entityRequest.Payload);
-    }
-
-    private _addToQueue = (entityRequest: EntityRequest) => {
-        if (!this.queue)
-            return Promise.reject(errors.INJECTION_ERROR(['IQueue']))
-
-        this.queue.push(entityRequest)
-
-        return Promise.resolve(entityRequest.Payload);
-    }
-
-    private _initiateEntityRequest = (entityRequest: EntityRequest) => {
-        if (!this._getRequestRepo)
-            return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
-
-        return this._getRequestRepo().save(entityRequest);
-    }
+    stream: BehaviorSubject<[number, T]> = new BehaviorSubject([0, {} as T]);
 
     create = async (entity: T) => {
         if (!this._getInternalRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
         const initiateEntityRequest = {
-            Type: this.model.name,
+            Type: 1, //his.model.name,
             RequestType: EntityRequestType.CREATE,
             RequestStatus: EntityRequestStatus.INITIATED,
-            Payload: entity,
+            Payload: JSON.stringify(entity),
             DateCreated: new Date()
         };
 
@@ -78,18 +79,14 @@ export class Manager<T> implements IManager<T> {
         const markEntityRequestAsProcessedLocally =
             () => this._markAsProcessedLocally(entityRequest);
 
-        // TODO how do we get the newly created ID to return from internalRepo.save?
-        // theoretically it could not be saved or we could be waiting for it to be saved
-        // so in practice, we would need a way of updating records that havent been externally saved
-        // that will eventually be reconciled
-        // it may be possible to find if an EntityRequest has first been processed externally, if it hasnt,
-        // ...
+        const emitProcessedLocallyEvent = (entity: T) => {
+            this.stream.next([0, entity])
+            return Promise.resolve(entity);
+        }
+
         return this._getInternalRepo().save(entity)
             .then(markEntityRequestAsProcessedLocally)
-            .then(entity => {
-                this.stream.next([0, entity])
-                return Promise.resolve(entity);
-            })
+            .then(emitProcessedLocallyEvent)
             .then(_ => this._addToQueue(entityRequest));
     }
 

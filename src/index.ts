@@ -5,9 +5,10 @@ import { Connection as TypeOrmConnection } from 'typeorm';
 import { Manager } from "./manager";
 import { EntityRequest } from "./manager/EntityRequest";
 import { Queue, Connection } from "./services";
+import { Mason } from "./adapters/Mason.gql";
 
 const initEmporium = (connection: () => TypeOrmConnection) => {
-    container.register("IAdapter", { useClass: HttpBin });
+    container.register("IAdapter", { useClass: Mason });
     container.register("IQueue", { useClass: Queue }, { singleton: true });
     container.register("IManager", { useClass: Manager });
     container.register("IConnection", { useFactory: () => new Connection(connection) });

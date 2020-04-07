@@ -1,4 +1,4 @@
-import { BehaviorSubject } from "rxjs/internal/BehaviorSubject";
+import { Subject } from "rxjs/internal/Subject";
 import { AsyncQueue, queue, retry, series } from "async";
 import { IQueue, IConnection, IAdapter } from "../interfaces";
 import { singleton, autoInjectable } from "tsyringe";
@@ -12,7 +12,7 @@ import { orderBy } from 'lodash/fp';
 @singleton()
 export class Queue<T> implements IQueue<T> {
 
-    processedExternally: BehaviorSubject<T> = new BehaviorSubject({} as T);
+    processedExternally: Subject<T> = new Subject();
 
     private _initialQueue: () => AsyncQueue<any> = () => queue(
         async (task, callback) => task(callback)
@@ -20,10 +20,10 @@ export class Queue<T> implements IQueue<T> {
 
     private _queue: AsyncQueue<any> = this._initialQueue()
 
-    private _retry = (task: () => Promise<T>) => {
+    private _retry = (task: () => Promise<EntityRequest>) => {
 
         const request = () =>
-            (callback: (err: Error | null, entityRequest?: T) => void) =>
+            (callback: (err: Error | null, entityRequest?: EntityRequest) => void) =>
                 task().then(entity => callback(null, entity)).catch(err => callback(err))
 
         return new Promise<T>(resolve => retry(3, request(), (err, entity: T) => {

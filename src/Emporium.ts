@@ -2,6 +2,7 @@ import { ObjectType, ObjectLiteral } from "typeorm";
 import { autoInjectable } from "tsyringe";
 import { IManager } from "./interfaces";
 import { Manager } from "./manager";
+import { Observable, of } from "rxjs";
 
 @autoInjectable()
 export class Emporium<T extends ObjectLiteral> {
@@ -18,11 +19,10 @@ export class Emporium<T extends ObjectLiteral> {
     // find = (findOptions = { order: { id: 'DESC' } } as FindManyOptions): Promise<T[]> =>
     //     this.repo.find().then((result => this._entityRepo.find(findOptions)));
 
-    // stream = (): Promise<Observable<[number, T]>> => this.queue.stream();
+    stream = (): Promise<Observable<[number, T]>> => {
+        debugger;
+        return Promise.resolve(of())//this._manager.stream)
+    };
 
-    // streamAll = (): Promise<Observable<any>> =>
-    //     this.stream().then(stream => stream.pipe(
-    //         filter(task => task[0] === 1),
-    //         map(_ => this.find())
-    //     ));
+    streamAll = (): Promise<Observable<any>> => Promise.resolve(of())//this._manager.stream)
 }

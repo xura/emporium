@@ -1,7 +1,9 @@
-import { Expect, TestCase, TestFixture, Test, Focus, Setup } from "alsatian";
+import { TestCase, TestFixture, Test, Focus, Setup, Expect } from "alsatian";
 import startConnection from '../connection';
-import { Manager } from "../../src/manager";
 import { Achievement } from "../Entity";
+import { take } from 'rxjs/operators'
+import { Manager } from "../../src/manager";
+import { Observable, BehaviorSubject, Subject } from "rxjs";
 
 @TestFixture("Manager Test Fixture")
 export class ManagerTestFixture {
@@ -10,20 +12,27 @@ export class ManagerTestFixture {
     public asyncSetup = async () => await startConnection();
 
     @Focus
-    @TestCase(1, 2)
     @Test('Creating an EntityRequest emits a new event to the Manager.stream BehaviorSubject')
-    public ManagerStreamTest() {
+    public async ManagerStreamTest() {
         const manager = new Manager(Achievement);
 
-        manager.stream.subscribe(entity => {
-            debugger;
-        });
+        const streamCallCount = await new Promise(resolve => {
+            let count = 0;
+            manager.stream.subscribe(entity => {
+                count++;
+            })
 
-        manager.create({
-            description: "Description",
-            title: "Title"
+            manager.create({
+                description: "Description",
+                title: "Title"
+            })
+
+            setTimeout(() => {
+                resolve(count)
+            }, 300)
         })
 
-        Expect(true).toBe(true);
+
+        Expect(streamCallCount).toBe(3)
     }
 }
