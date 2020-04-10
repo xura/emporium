@@ -2,7 +2,6 @@ import { TestFixture, Test, Focus, Setup, Expect } from "alsatian";
 import startConnection from '../connection';
 import { Achievement } from "../Entity";
 import { Manager } from "../../src/manager";
-import { ExternalResource } from "../../src";
 
 @TestFixture("Manager Test Fixture")
 export class ManagerTestFixture {
