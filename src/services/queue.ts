@@ -4,13 +4,14 @@ import { IQueue, IConnection, IAdapter } from "../interfaces";
 import { singleton, autoInjectable } from "tsyringe";
 import { EntityRequest, EntityRequestStatus } from "../manager/EntityRequest";
 import { inject } from "tsyringe";
-import { Repository, UpdateResult } from "typeorm";
+import { Repository } from "typeorm";
 import errors from "../shared/errors";
 import { orderBy } from 'lodash/fp';
+import ExternalResource from "../manager/ExternalResource";
 
 @autoInjectable()
 @singleton()
-export class Queue<T> implements IQueue<T> {
+export class Queue<T extends ExternalResource> implements IQueue<T> {
 
     processedExternally: Subject<T> = new Subject();
 
@@ -26,7 +27,7 @@ export class Queue<T> implements IQueue<T> {
             (callback: (err: Error | null, entityRequest?: EntityRequest) => void) =>
                 task().then(entity => callback(null, entity)).catch(err => callback(err))
 
-        return new Promise<T>(resolve => retry(3, request(), (err, entity: T) => {
+        return new Promise<EntityRequest>(resolve => retry(3, request(), (err, entity: EntityRequest) => {
             if (err) {
                 this._queue = this._initialQueue()
                 return;
@@ -44,18 +45,24 @@ export class Queue<T> implements IQueue<T> {
         return await this._retry(this._externalRepo.mapToExternalRequest(entityRequest))
     }
 
-    private _markAsProcessedExternally = async (entity: any): Promise<UpdateResult> => {
-        if (!entity.id)
-            return Promise.reject('Trying to update an Entity Request with no Id');
+    private _markAsProcessedExternally = async (entityRequest: EntityRequest): Promise<T> => {
+        const payload = JSON.parse(entityRequest.Payload)
+
+        if (!payload.ExternalId)
+            return Promise.reject('Trying to mark an Entity as processed externally with no ExternalId');
+
+        if (!entityRequest.id)
+            return Promise.reject('Trying to mark an EntityRequest as processed externally with no id');
 
         if (!this._getRequestRepo)
             return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
-        return await this._getRequestRepo().update(entity.id, {
-            RequestStatus: EntityRequestStatus.PROCESSED_EXTERNALLY
+        return await this._getRequestRepo().update(entityRequest.id, {
+            RequestStatus: EntityRequestStatus.PROCESSED_EXTERNALLY,
+            Payload: entityRequest.Payload
         }).then(() => {
-            this.processedExternally.next(entity)
-            return entity;
+            this.processedExternally.next(payload)
+            return payload;
         });
     }
 

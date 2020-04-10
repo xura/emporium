@@ -1,18 +1,17 @@
-import { injectable, inject } from "tsyringe";
+import { injectable } from "tsyringe";
 import ky from "ky-universal";
-import { IAdapter, IQueue } from "../interfaces";
+import { IAdapter } from "../interfaces";
 import { EntityRequest, EntityRequestType } from '../manager/EntityRequest';
+import ExternalResource from '../manager/ExternalResource';
 
 @injectable()
-export class HttpBin<T> implements IAdapter<T> {
+export class HttpBin<T extends ExternalResource> implements IAdapter<T> {
 
-    mapToExternalRequest(entityRequest: EntityRequest): () => Promise<EntityRequest> {
+    mapToExternalRequest(entityRequest: EntityRequest) {
         switch (entityRequest.RequestType) {
             case EntityRequestType.CREATE:
             default:
-                return () => ky.post('https://httpbin.org/status/200').then((response: Response) => {
-                    return response.json()
-                })
+                return () => this.create(entityRequest);
         }
     }
 

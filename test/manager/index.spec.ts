@@ -1,9 +1,8 @@
-import { TestCase, TestFixture, Test, Focus, Setup, Expect } from "alsatian";
+import { TestFixture, Test, Focus, Setup, Expect } from "alsatian";
 import startConnection from '../connection';
 import { Achievement } from "../Entity";
-import { take } from 'rxjs/operators'
 import { Manager } from "../../src/manager";
-import { Observable, BehaviorSubject, Subject } from "rxjs";
+import { ExternalResource } from "../../src";
 
 @TestFixture("Manager Test Fixture")
 export class ManagerTestFixture {

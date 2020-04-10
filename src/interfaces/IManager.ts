@@ -6,4 +6,6 @@ export interface IManager<T> {
     create(entity: T): Promise<T>;
     update(): void;
     delete(): void;
+    deleteAll(): void;
+    findAll(): Promise<(T[] | EntityRequest[])[]>
 }

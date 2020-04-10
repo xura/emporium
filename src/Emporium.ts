@@ -3,9 +3,10 @@ import { autoInjectable } from "tsyringe";
 import { IManager } from "./interfaces";
 import { Manager } from "./manager";
 import { Observable, of } from "rxjs";
+import { ExternalResource } from ".";
 
 @autoInjectable()
-export class Emporium<T extends ObjectLiteral> {
+export class Emporium<T extends ExternalResource> {
 
     private _manager: IManager<T>;
 
@@ -22,4 +23,8 @@ export class Emporium<T extends ObjectLiteral> {
     stream = (): Promise<Observable<any>> => Promise.resolve(of())
 
     streamAll = (): Promise<Observable<any>> => Promise.resolve(of(Promise.resolve()))
+
+    deleteAll = () => this._manager.deleteAll();
+
+    findAll = () => this._manager.findAll();
 }

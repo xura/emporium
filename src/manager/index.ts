@@ -1,9 +1,10 @@
-import { Repository, ObjectType } from "typeorm";
+import { Repository, ObjectType, DeepPartial } from "typeorm";
 import { inject, autoInjectable } from "tsyringe";
 import { EntityRequest, EntityRequestStatus, EntityRequestType } from "./EntityRequest";
-import { IManager, IAdapter, IConnection, IQueue } from "../interfaces";
+import { IManager, IConnection, IQueue } from "../interfaces";
 import errors from '../shared/errors';
 import { BehaviorSubject } from "rxjs";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 declare function assert(value: unknown): asserts value;
 
 @autoInjectable()
@@ -13,17 +14,21 @@ export class Manager<T> implements IManager<T> {
     private _getRequestRepo: (() => Repository<EntityRequest>) | undefined;
 
     private _markAsProcessedLocally = (entityRequest: EntityRequest) => {
-        assert(entityRequest.id)
-        assert(this._getRequestRepo)
+        if (!this._getRequestRepo)
+            return Promise.reject(errors.INJECTION_ERROR(['IQueue']))
+
+        if (!entityRequest.id)
+            return Promise.reject("Trying to process an Entity without an Id")
 
         return this._getRequestRepo().update(entityRequest.id, {
-            RequestStatus: EntityRequestStatus.PROCESSED_LOCALLY
-        }).then(() => JSON.parse(entityRequest.Payload));
+            RequestStatus: EntityRequestStatus.PROCESSED_LOCALLY,
+            Payload: JSON.stringify(entityRequest.Payload)
+        }).then(() => entityRequest);
     }
 
     private _addToQueue = (entityRequest: EntityRequest) => {
         if (!this.queue)
-            return Promise.reject(errors.INJECTION_ERROR(['IQueue']))
+            return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
 
         this.queue.push(entityRequest)
 
@@ -46,8 +51,13 @@ export class Manager<T> implements IManager<T> {
 
         this.queue &&
             this.queue.processedExternally.subscribe(
-                entity => {
-                    debugger;
+                (entity: any) => {
+                    if (!this._getInternalRepo)
+                        return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
+
+                    this._getInternalRepo().update(entity.id, {
+                        ExternalId: entity.ExternalId
+                    } as QueryDeepPartialEntity<T>)
                     this.stream.next([1, entity])
                 }
             )
@@ -77,17 +87,41 @@ export class Manager<T> implements IManager<T> {
             await this._initiateEntityRequest(initiateEntityRequest)
 
         const markEntityRequestAsProcessedLocally =
-            () => this._markAsProcessedLocally(entityRequest);
+            (entity: any) => this._markAsProcessedLocally({
+                ...entityRequest,
+                Payload: JSON.stringify({
+                    ...JSON.parse(entityRequest.Payload),
+                    id: entity.id
+                })
+            });
 
-        const emitProcessedLocallyEvent = (entity: T) => {
-            this.stream.next([0, entity])
+        const emitProcessedLocallyEvent = (entity: EntityRequest) => {
+            this.stream.next([0, JSON.parse(entity.Payload)])
             return Promise.resolve(entity);
         }
 
-        return this._getInternalRepo().save(entity)
+        return this._getInternalRepo().save(entity as DeepPartial<T>)
             .then(markEntityRequestAsProcessedLocally)
             .then(emitProcessedLocallyEvent)
-            .then(_ => this._addToQueue(entityRequest));
+            .then((er: EntityRequest) => this._addToQueue(er));
+    }
+
+    deleteAll = () => {
+        this.connection?.connect().createQueryBuilder().delete().from(this.model.name).where("id != -1").execute()
+        this.connection?.connect().createQueryBuilder().delete().from(EntityRequest).where("id != -1").execute()
+    }
+
+    findAll = async () => {
+        if (!this._getInternalRepo)
+            return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
+
+        if (!this._getRequestRepo)
+            return Promise.reject(errors.INJECTION_ERROR(['IConnection']))
+
+        return [
+            await this._getInternalRepo().find(),
+            await this._getRequestRepo().find()
+        ]
     }
 
     update = () => { }
