@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@types/async": "^3.0.2",
-    "async": "^3.1.0",
+    "async": "^3.2.2",
     "sql.js": "1.0.0",
     "tsyringe": "^3.4.0"
   }
